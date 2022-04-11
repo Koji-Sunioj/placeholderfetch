@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Test</title>
+    <style type="text/css">
+      article {
+        padding: 5px;
+        border: 1px solid grey;
+      }
+      
+      #loadmessage {
+         display: flex;
+         justify-content: center;
+        }
+      
+      
+      @media screen and (min-width: 600px){
+        #users {
+          display: grid;
+          grid-template-columns:  1fr 1fr 1fr};
+      }
+      
+      @media screen and (max-width: 600px){
+        #users {
+          display: grid;
+          grid-template-columns:  1fr};
+      }
+      
+      #view{
+        
+        display: flex;
+        flex-flow: column;
+        justify-content: center;
+        background-color: lightblue;
+      }
+      </style>
+      </head>
+  <body>
+    <div id="loadmessage">
+      <p></p>
+    </div>
+    <section id="users"> 
+    
+    </section>
+    <section id="view">
+
+    </section>
+    <div id="map"></div>
+    <script>
+
+      //fetch function
+      function fetchit(url,parameter=false)
+      {
+        
+        let loadTime = document.querySelector('#loadmessage')
+        loadTime.setAttribute('style','background-color:pink;')
+        loadTime.querySelector('p').textContent = 'loading'
+        
+        let fetched = fetch(url).then((response) => 
+        {
+          if (response.ok)
+          {
+            return response.json()
+          }
+          else
+          {
+            throw Error
+          }
+        }).then((data)=> {
+          
+          if (parameter)
+          {
+            data = data.filter(element => element.id == parameter)[0]
+          }
+
+          return data
+        });
+          
+        setTimeout(()=>{
+          loadTime.querySelector('p').textContent = 'finished'
+          loadTime.setAttribute('style','background-color:lightblue;')
+        }, 100) 
+        return fetched
+      }
+      
+      //intialized function
+      async function init() {
+        try{
+            const target = document.getElementById('users')
+            const data = await fetchit('https://jsonplaceholder.typicode.com/users/')
+            console.log(data)
+            //iterate through data
+            data.forEach(element => {
+              const {email,phone,username,website,name} = element
+              const thearr = [phone,username,website,email]
+              const newArticle = document.createElement('article')
+              newArticle.innerHTML += `<h3>${name}</h3>`
+              thearr.forEach(element => {
+                newArticle.innerHTML += `<p>${element}</p>`
+              })
+              newArticle.innerHTML += '<button name="showuser">Read More</button>'
+              newArticle.id = element.id
+              newArticle.querySelector('button[name="showuser"]').addEventListener('click',showmore)
+              target.appendChild(newArticle)
+            });
+        }
+    
+        catch(error)
+        {
+            console.log(error)
+        }
+      }
+
+      function append(target,appendTarget,object){
+        appendTarget.innerHTML +='<p><strong>address</strong></p>'
+        Object.entries(object).forEach(element => {
+          if (!element[0].includes('geo'))
+          {
+            appendTarget.innerHTML += `<p>${element.join(': ')}</p`
+          }
+        })
+        target.appendChild(appendTarget)
+      }
+    
+      async function showmore(event) {
+
+        const articles = document.getElementsByTagName('article')
+        Array.from(articles).forEach(element => {
+          element.setAttribute('style','background-color:white;')
+        })  
+        const id = event.target.parentElement.id
+        event.target.parentElement.setAttribute('style','background-color:pink;')
+        const {name,address,company} = await fetchit('https://jsonplaceholder.typicode.com/users/',id)
+        const target = document.getElementById('view') 
+        target.setAttribute('style','padding:5px;')
+        target.innerHTML = `<h3>Details for ${name}</h3`
+        append(target,document.createElement('div'),address)
+        const companyDiv = document.createElement('div')
+        append(target, document.createElement('div'),company)
+      }
+      document.addEventListener('DOMContentLoaded',init)
+    </script>
+  </body>
+</html>
